@@ -1,0 +1,7 @@
+
+get vehicles resp
+{"response":[{"id":27207623174674431,"vehicle_id":1143983094,"vin":"5YJXCBE26JF129195","display_name":"129195","option_codes":"RENA,AD15,AF02,AH00,APF2,APH3,APPB,AU01,BCMB,BP00,BR00,BS00,BTX6,CC02,CDM0,CH04,PMSS,COUS,CW02,DRLH,DSHG,DU00,DV4W,FG02,FMP6,FR01,GLFR,HC00,HP00,IDCF,INLFC,LLP1,LP01,LT5C,ME02,MI03,PF00,PI01,PK00,QLFC,RCX0,RFPX,S02C,SC05,SP00,SR04,ST01,SU01,TIC4,TM00,TR01,TRA1,TW01,UM01,USSB,UTZW,WT20,X001,X003,X007,X011,X013,X021,X025,X026,X028,X031,X037,X040,X042,X043,YFFC,MDLX","color":null,"tokens":["b51bd61437acdcbc","a8e984e3a391b351"],"state":"asleep","in_service":false,"id_s":"27207623174674431","calendar_enabled":true,"api_version":6,"backseat_token":null,"backseat_token_updated_at":null}],"count":1}
+
+get vehicle_state resp
+{"response":{"api_version":6,"autopark_state_v2":"standby","autopark_style":"dead_man","calendar_supported":true,"car_version":"2018.49.20 e6f543e","center_display_state":0,"df":0,"dr":0,"ft":0,"homelink_nearby":true,"is_user_present":false,"last_autopark_error":"no_error","locked":true,"media_state":{"remote_control_enabled":true},"notifications_supported":true,"odometer":2331.426171,"parsed_calendar_supported":true,"pf":0,"pr":0,"remote_start":false,"remote_start_supported":true,"rt":0,"software_update":{"expected_duration_sec":2700,"status":""},"speed_limit_mode":{"active":false,"current_limit_mph":60.0,"max_limit_mph":90,"min_limit_mph":50,"pin_code_set":false},"sun_roof_percent_open":null,"sun_roof_state":"unknown","timestamp":1549204474345,"valet_mode":false,"vehicle_name":""}}
+

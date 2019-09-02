@@ -1,0 +1,3 @@
+2019/09/01 18:11:02 restapi.go:72: INFO | In Restapi New
+t
+2019/02/04 12:51:28 restapi.go:278: ERROR | Error getting to server at URL:http://localhost:3000/charge_state
