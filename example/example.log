@@ -1,3 +1,2 @@
-2019/09/01 18:11:02 restapi.go:72: INFO | In Restapi New
-t
-2019/02/04 12:51:28 restapi.go:278: ERROR | Error getting to server at URL:http://localhost:3000/charge_state
+2019/09/04 06:48:20 restapi.go:72: INFO | In Restapi New
+2019/09/04 06:43:08 restapi.go:347: ERROR | Error getting to server at URL:http://localhost:3000/authentication

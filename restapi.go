@@ -92,16 +92,16 @@ func (pRA *Restapi) GetLastStatusCode() int{
 }
 
 func (pRA *Restapi) GetArrayValueString(index int, key string) string{
-  return(pRA.CastString(pRA.GetArrayValue(index, key)))
+  return(CastString(pRA.GetArrayValue(index, key)))
 }
 
 func (pRA *Restapi) GetArrayValueInt(index int, key string) int{
-  return(pRA.CastFloatToInt(pRA.GetArrayValue(index, key)))
+  return(CastFloatToInt(pRA.GetArrayValue(index, key)))
 }
 
 
 func (pRA *Restapi) GetArrayValueInt64(index int, key string) uint64{
-  return(pRA.CastFloatToInt64(pRA.GetArrayValue(index, key)))
+  return(CastFloatToInt64(pRA.GetArrayValue(index, key)))
 }
 
 func (pRA *Restapi) GetArrayValue(index int, key string) interface{}{
@@ -115,7 +115,7 @@ func (pRA *Restapi) GetArrayValue(index int, key string) interface{}{
     logmsg.Print(logmsg.Error, "Index outside of array Range")
   }
 
-  tmpmap := pRA.CastMap(pRA.amInnerMapArray[index])
+  tmpmap := CastMap(pRA.amInnerMapArray[index])
 
   return(tmpmap[key])
 
@@ -136,13 +136,13 @@ func (pRA *Restapi) GetValue(index string) interface{}{
 
 func (pRA *Restapi) GetValueString(index string) string{
 
-  return(pRA.CastString(pRA.GetValue(index)))
+  return(CastString(pRA.GetValue(index)))
 
 }
 
 func (pRA *Restapi) GetValueInt(index string) int{
 
-  return(pRA.CastFloatToInt(pRA.GetValue(index)))
+  return(CastFloatToInt(pRA.GetValue(index)))
 
 }
 
@@ -150,13 +150,13 @@ func (pRA *Restapi) GetValueInt(index string) int{
 // CastArray - Sorry I like C's terminology so built a quick
 //             helper function
 
-func (pRA *Restapi) CastArray(item interface{}) []interface{} {
+func CastArray(item interface{}) []interface{} {
 
   return item.([]interface{})
 
 }
 
-func (pRA *Restapi) CastFloatToInt(item interface{}) int {
+func CastFloatToInt(item interface{}) int {
 
   var f float64
   f = item.(float64)
@@ -165,7 +165,7 @@ func (pRA *Restapi) CastFloatToInt(item interface{}) int {
 
 }
 
-func (pRA *Restapi) CastFloatToInt64(item interface{}) uint64 {
+func CastFloatToInt64(item interface{}) uint64 {
 
   var f float64
   f = item.(float64)
@@ -174,7 +174,7 @@ func (pRA *Restapi) CastFloatToInt64(item interface{}) uint64 {
 
 }
 
-func (pRA *Restapi) CastString(item interface{}) string {
+func CastString(item interface{}) string {
   return item.(string)
 }
 
@@ -183,7 +183,7 @@ func (pRA *Restapi) CastString(item interface{}) string {
 // CastMap - Sorry I like C's terminology so built a quick
 //             helper function
 
-func (pRA *Restapi) CastMap(item interface{}) map[string]interface{} {
+func CastMap(item interface{}) map[string]interface{} {
 
   return(item.(map[string]interface{}))
 
@@ -222,7 +222,7 @@ func (pRA *Restapi) Dump(){
     for i:=0 ; i < pRA.iInnerMapArrayCount; i++ {
       //fmt.Println("Index:", i)
       //fmt.Println(pRA.amInnerMapArray[i])
-      tmpmap := pRA.CastMap(pRA.amInnerMapArray[i])
+      tmpmap := CastMap(pRA.amInnerMapArray[i])
       for k, v := range tmpmap {
         fmt.Println("Index 0:", k, "=", v)
 
@@ -383,16 +383,16 @@ func (pRA *Restapi) Send() bool {
     fmt.Println(pRA.RawData)
   }
 
-  pRA.mResponseMapData = pRA.CastMap(pRA.RawData)
+  pRA.mResponseMapData = CastMap(pRA.RawData)
 
   if(pRA.bInnerMap){
     if(pRA.bDebug){
       fmt.Println("Looking for innermap:", pRA.sInnerMapName)
     }
-    pRA.mInnerMapData = pRA.CastMap(pRA.mResponseMapData[pRA.sInnerMapName])
+    pRA.mInnerMapData = CastMap(pRA.mResponseMapData[pRA.sInnerMapName])
   }else if(pRA.bInnerMapArray){
     tmp1 := pRA.mResponseMapData[pRA.sInnerMapName]
-    pRA.amInnerMapArray = pRA.CastArray(tmp1)
+    pRA.amInnerMapArray = CastArray(tmp1)
 
     var f float64
     f = pRA.mResponseMapData[pRA.sInnerMapArrayCountName].(float64)

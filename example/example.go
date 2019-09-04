@@ -42,13 +42,13 @@ func bigarray(bDebug bool){
 
   fmt.Printf("destination_charging[%s]\n", tmp1)
 
-  myarray := r.CastArray(tmp1)
+  myarray := restapi.CastArray(tmp1)
 
   fmt.Println("array len:", len(myarray))
 
   for i:=0; i < len(myarray); i++ {
 
-    tmpmap := r.CastMap(myarray[i])
+    tmpmap := restapi.CastMap(myarray[i])
 
     for name, value := range tmpmap{
   
@@ -118,7 +118,7 @@ func sunriseset(bDebug bool){
 
 // 1. Get the info as an array
 
-  astroArray := r.CastArray(r.GetValue("astronomy"))
+  astroArray := restapi.CastArray(r.GetValue("astronomy"))
 
   fmt.Printf("ArrayLength[%d]\n", len(astroArray))
 
@@ -130,7 +130,7 @@ func sunriseset(bDebug bool){
 // 2. Get the map desired
 
   fmt.Printf("--------------------------\n")
-  astroMap := r.CastMap(astroArray[1])
+  astroMap := restapi.CastMap(astroArray[1])
   for k, v := range astroMap {
     fmt.Println(k, "=", v)
   } // end for loop
