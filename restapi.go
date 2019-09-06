@@ -25,13 +25,13 @@ const (
 
 type Restapi struct {
 
-  sBearerAccessToken   string
+  sAccessToken   string
   sUrl                 string
   sName                string
   Method              HttpMethod
   sMethodString        string
 
-  bRequiresBearerAccessToken bool
+  bRequiresAccessToken       bool
   bInnerMap                  bool
   bInnerMapArray             bool
   sInnerMapName              string
@@ -73,7 +73,7 @@ func New(method HttpMethod, name string, url string) *Restapi{
 
   r := new(Restapi)
 
-  r.bRequiresBearerAccessToken = false
+  r.bRequiresAccessToken = false
 
   r.setUrl(url)
 
@@ -196,7 +196,7 @@ func (pRA *Restapi) Dump(){
   fmt.Println("Url:", pRA.sUrl)
   fmt.Println("Method:", pRA.Method)
   fmt.Println("MethodString:", pRA.sMethodString)
-  fmt.Println("BearerAccessToken:", pRA.sBearerAccessToken)
+  fmt.Println("AccessToken:", pRA.sAccessToken)
   
   if(pRA.bInnerMap){
     fmt.Println("sInnerMapName:",pRA.sInnerMapName)
@@ -281,8 +281,13 @@ func (pRA *Restapi) HasInnerMapArray(name string, countname string){
 }
 
 func (pRA *Restapi) SetBearerAccessToken(AccessToken string){
-  pRA.sBearerAccessToken = fmt.Sprintf("Bearer %s", AccessToken)
-  pRA.bRequiresBearerAccessToken = true
+  pRA.sAccessToken = fmt.Sprintf("Bearer %s", AccessToken)
+  pRA.bRequiresAccessToken = true
+}
+
+func (pRA *Restapi) SetBasicAccessToken(AccessToken string){
+  pRA.sAccessToken = fmt.Sprintf("Basic %s", AccessToken)
+  pRA.bRequiresAccessToken = true
 }
 
 func (pRA *Restapi) setUrl(Url string){
@@ -330,8 +335,8 @@ func (pRA *Restapi) Send() bool {
   req, _ := http.NewRequest(pRA.sMethodString, pRA.sUrl, nil)
 
 
-  if(pRA.bRequiresBearerAccessToken){
-    req.Header.Add("Authorization", pRA.sBearerAccessToken)
+  if(pRA.bRequiresAccessToken){
+    req.Header.Add("Authorization", pRA.sAccessToken)
   }
 
   req.Header.Add("cache-control", "no-cache")
