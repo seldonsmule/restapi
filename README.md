@@ -1,3 +1,6 @@
-Simple restapi handling tool
+# Simple restapi handling tool
 
-Need to update documentation on how to use
+Created to do simple restapi calls in go.  There are probably better tool :)
+
+# Returns
+

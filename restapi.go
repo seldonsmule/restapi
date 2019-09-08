@@ -6,8 +6,10 @@ import (
 	"io/ioutil"
         "encoding/json"
         "crypto/tls"
-        //"strings"
+        "strings"
+        "github.com/basgys/goxml2json"
         "github.com/seldonsmule/logmsg"
+
 )
 
 type HttpMethod int
@@ -37,6 +39,7 @@ type Restapi struct {
   bInnerMapArray             bool
   sInnerMapName              string
   bDebug                     bool
+  bXML                       bool
 
   nLastStatusCode int
 
@@ -57,6 +60,14 @@ func NewPost(name string, url string) *Restapi{
 
 func NewGet(name string, url string) *Restapi{
   return(New(Get, name, url))
+}
+
+func NewGetXML(name string, url string) *Restapi{
+
+  r := New(Get, name, url)
+  r.bXML = true
+
+  return r
 }
 
 func NewPut(name string, url string) *Restapi{
@@ -400,7 +411,35 @@ func (pRA *Restapi) Send() bool {
     fmt.Println(string(body))
   }
 
+//
+// added xml logic 9/8/2019 
+// using the xml2jon library from github we move the xml into json
+// and go back to json work
+//
+  if(pRA.bXML){
+
+/////fmt.Println(string(body))
+
+    xml := strings.NewReader(string(body))
+
+    ejson, err := xml2json.Convert(xml)
+    if err != nil {
+  	panic("That's embarrassing...")
+    }
+/////fmt.Println(ejson.String())
+
+   // reusing the body variable so we can fall through to exising logic
+   // pre-xml code added
+
+   body = []byte(ejson.String())
+
+  }
+
   json.Unmarshal(body, &pRA.RawData)
+
+/////fmt.Println(pRA.RawData)
+/////os.Exit(1)
+
   if(pRA.bDebug){
     fmt.Println(pRA.RawData)
   }
