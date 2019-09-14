@@ -28,10 +28,10 @@ const (
 
 type Restapi struct {
 
-  sAccessToken   string
+  sAccessToken         string
   sUrl                 string
   sName                string
-  Method              HttpMethod
+  Method               HttpMethod
   sMethodString        string
 
   bRequiresAccessToken       bool
@@ -40,6 +40,7 @@ type Restapi struct {
   sInnerMapName              string
   bDebug                     bool
   bXML                       bool
+  bXMLDontParseResponse      bool
 
   nLastStatusCode int
 
@@ -62,10 +63,11 @@ func NewGet(name string, url string) *Restapi{
   return(New(Get, name, url))
 }
 
-func NewGetXML(name string, url string) *Restapi{
+func NewGetXML(name string, url string, parseresponse bool) *Restapi{
 
   r := New(Get, name, url)
   r.bXML = true
+  r.bXMLDontParseResponse = parseresponse
 
   return r
 }
@@ -417,6 +419,10 @@ func (pRA *Restapi) Send() bool {
 // and go back to json work
 //
   if(pRA.bXML){
+    if(!pRA.bXMLDontParseResponse){
+      pRA.RawData = string(body) // need to figure out how to save
+      return true
+    }
 
 /////fmt.Println(string(body))
 
