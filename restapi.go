@@ -1,3 +1,15 @@
+//
+//
+// restapi
+//
+// restapi simplifies calling restapis.  It encapsulates a bunch of
+// functionality to simplify calls
+//
+// Also added the XML logic to turn a returned XML file into json
+// so we can reuse the same logic in our other apps
+//
+//
+
 package restapi
 
 import (
@@ -7,7 +19,7 @@ import (
         "encoding/json"
         "crypto/tls"
         "strings"
-        "github.com/basgys/goxml2json"
+        "github.com/basgys/goxml2json"   
         "github.com/seldonsmule/logmsg"
 
 )
@@ -15,7 +27,8 @@ import (
 type HttpMethod int
 
 
-// Error levels that the user can set
+// Type of API methods
+
 const (
         Get HttpMethod = 1 + iota
         Post
@@ -24,7 +37,9 @@ const (
 )
 
 
-
+//
+// our internal control structure
+//
 
 type Restapi struct {
 
@@ -44,7 +59,7 @@ type Restapi struct {
 
   nLastStatusCode int
 
-  RawData interface{}
+  RawData interface{}  // used to contain the raw response msg mody
 
   mResponseMapData map[string]interface{}
   mInnerMapData map[string]interface{}
@@ -55,13 +70,44 @@ type Restapi struct {
 
 }
 
+//
+// func NewPost(name string, url string) *Restapi
+//
+// Create a new restapi object for sending post
+//
+// name - name of the post
+// url - URL to execute against
+//
+//
+
 func NewPost(name string, url string) *Restapi{
   return(New(Post, name, url))
 }
 
+//
+// func NewGet(name string, url string) *Restapi
+//
+// Create a new restapi object for sending GET
+//
+// name - name of the get
+// url - URL to execute against
+//
+//
+
 func NewGet(name string, url string) *Restapi{
   return(New(Get, name, url))
 }
+
+//
+// func NewGetXML(name string, url string, parseresponse bool) *Restapi
+//
+// Create a new restapi object for calling a URL tha responds with XML
+//
+// name - name of the cmd - more of a reference thing for logging
+// url - URL to execute against
+// parseresponse - true/false. If true, will attempt load into json
+//
+//
 
 func NewGetXML(name string, url string, parseresponse bool) *Restapi{
 
@@ -72,13 +118,44 @@ func NewGetXML(name string, url string, parseresponse bool) *Restapi{
   return r
 }
 
+//
+// func NewPut(name string, url string) *Restapi 
+//
+// Create a new restapi object for sending PUT
+//
+// name - name of the put
+// url - URL to execute against
+//
+//
+
 func NewPut(name string, url string) *Restapi{
   return(New(Put, name, url))
 }
 
+//
+// func NewDelete(name string, url string) *Restapi
+//
+// Create a new restapi object for sending DELETE
+//
+// name - name of the delete
+// url - URL to execute against
+//
+//
+
 func NewDelete(name string, url string) *Restapi{
   return(New(Delete, name, url))
 }
+
+//
+// func New(method HttpMethod, name string, url string) *Restapi
+//
+// Create a new restapi object
+//
+// method - Type of http method (get, put, delete, etc)
+// name - name of the get
+// url - URL to execute against
+//
+//
 
 func New(method HttpMethod, name string, url string) *Restapi{
 
@@ -101,22 +178,67 @@ func New(method HttpMethod, name string, url string) *Restapi{
   return r
 }
 
+//
+// func (pRA *Restapi) GetLastStatusCode() int
+//
+// Get the last status code
+//
+
 func (pRA *Restapi) GetLastStatusCode() int{
   return pRA.nLastStatusCode
 }
+
+//
+// func (pRA *Restapi) GetArrayValueString(index int, key string) string{
+//
+// Return string value of an array index.  
+//
+// index - index into array
+// key   - key string being looked for in the map from the index
+//
+//
 
 func (pRA *Restapi) GetArrayValueString(index int, key string) string{
   return(CastString(pRA.GetArrayValue(index, key)))
 }
 
+//
+// func (pRA *Restapi) GetArrayValueInt(index int, key string) int
+//
+// Return integer value of an array index
+//
+// index - index into array
+// key   - key string being looked for in the map from the index
+//
+//
+
 func (pRA *Restapi) GetArrayValueInt(index int, key string) int{
   return(CastFloatToInt(pRA.GetArrayValue(index, key)))
 }
 
+//
+// func (pRA *Restapi) GetArrayValueInt64(index int, key string) uint64
+//
+// Return integer64 value of an array index
+//
+// index - index into array
+// key   - key string being looked for in the map from the index
+//
+//
 
 func (pRA *Restapi) GetArrayValueInt64(index int, key string) uint64{
   return(CastFloatToInt64(pRA.GetArrayValue(index, key)))
 }
+
+//
+// func (pRA *Restapi) GetArrayValue(index int, key string) interface{}
+//
+// Return value of an array index
+//
+// index - index into array
+// key   - key string being looked for in the map from the index
+//
+//
 
 func (pRA *Restapi) GetArrayValue(index int, key string) interface{}{
 
@@ -135,6 +257,14 @@ func (pRA *Restapi) GetArrayValue(index int, key string) interface{}{
 
 }
 
+//
+// func (pRA *Restapi) GetValue(index string) interface{}
+//
+// Gets the value of a map
+//
+// index - map string name
+//
+
 func (pRA *Restapi) GetValue(index string) interface{}{
 
   // note interface{} is similar to void in C (in my mind)
@@ -148,11 +278,29 @@ func (pRA *Restapi) GetValue(index string) interface{}{
 
 }
 
+//
+//
+// func (pRA *Restapi) GetValueString(index string) string
+//
+// calls getvalue and cast it as a string
+//
+// index - string index being looked for
+//
+
 func (pRA *Restapi) GetValueString(index string) string{
 
   return(CastString(pRA.GetValue(index)))
 
 }
+
+//
+//
+// func (pRA *Restapi) GetValueInt(index string) int
+//
+// calls getvalue and cast it as an int
+//
+// index - string index being looked for
+//
 
 func (pRA *Restapi) GetValueInt(index string) int{
 
@@ -170,6 +318,10 @@ func CastArray(item interface{}) []interface{} {
 
 }
 
+//
+// CastFloatToInt - Sorry I like C's terminology so built a quick
+//             helper function
+
 func CastFloatToInt(item interface{}) int {
 
   var f float64
@@ -179,6 +331,10 @@ func CastFloatToInt(item interface{}) int {
 
 }
 
+//
+// CastFloatToInt64 - Sorry I like C's terminology so built a quick
+//             helper function
+
 func CastFloatToInt64(item interface{}) uint64 {
 
   var f float64
@@ -187,6 +343,10 @@ func CastFloatToInt64(item interface{}) uint64 {
   return uint64(f)
 
 }
+
+//
+// CastString - Sorry I like C's terminology so built a quick
+//             helper function
 
 func CastString(item interface{}) string {
   return item.(string)
@@ -203,6 +363,11 @@ func CastMap(item interface{}) map[string]interface{} {
 
 }
 
+//
+// func (pRA *Restapi) Dump()
+//
+// For Diagnostics - dumps out the contents
+//
 
 func (pRA *Restapi) Dump(){
 
@@ -274,18 +439,54 @@ func (pRA *Restapi) Dump(){
 
 }
 
+//
+// func (pRA *Restapi) DebugOn()
+//
+// Turn on debugging.  This will generate extra dumps of data
+// to standard out
+//
+
 func (pRA *Restapi) DebugOn(){
   pRA.bDebug = true
 }
+
+//
+// func (pRA *Restapi) DebugOn()
+//
+// Turn off debugging
+//
 
 func (pRA *Restapi) DebugOff(){
   pRA.bDebug = false
 }
 
+//
+// func (pRA *Restapi) HasInnerMap(name string)
+//
+// This was designed around the tesla apis that has a very meassured
+// way of nesting a map within a map.  You put in the name of the map
+// when setting andn restapi will setup a pointer directly to it 
+// for easy access
+//
+// Truthfully - probably a tesla thing only, but that was what
+// restapi was originally created to simplify the code for
+// 
+// name - name of intermap 
+//
+
 func (pRA *Restapi) HasInnerMap(name string){
   pRA.bInnerMap = true
   pRA.sInnerMapName = name
 }
+
+//
+// func (pRA *Restapi) HasInnerMapArray(name string, countname string)
+//
+// Same update as HasInnerMap().  But it is an array of maps
+// 
+// name - name of intermap 
+// countname - Tesla specific - map name containing array count
+//
 
 func (pRA *Restapi) HasInnerMapArray(name string, countname string){
   pRA.bInnerMapArray = true
@@ -294,19 +495,48 @@ func (pRA *Restapi) HasInnerMapArray(name string, countname string){
   pRA.iInnerMapArrayCount = 0
 }
 
+//
+// func (pRA *Restapi) SetBearerAccessToken(AccessToken string)
+//
+// Sets Token for Bearer Authentication
+//
+
 func (pRA *Restapi) SetBearerAccessToken(AccessToken string){
   pRA.sAccessToken = fmt.Sprintf("Bearer %s", AccessToken)
   pRA.bRequiresAccessToken = true
 }
+
+//
+//func (pRA *Restapi) SetBasicAccessToken(AccessToken string){
+//
+// Sets Token for Basic Authentication
+//
 
 func (pRA *Restapi) SetBasicAccessToken(AccessToken string){
   pRA.sAccessToken = fmt.Sprintf("Basic %s", AccessToken)
   pRA.bRequiresAccessToken = true
 }
 
+//
+//
+// func (pRA *Restapi) setUrl(Url string){
+//
+// store the URL string to call
+// 
+// Url - Url of API
+//
+
 func (pRA *Restapi) setUrl(Url string){
   pRA.sUrl = Url
 }
+
+//
+//
+// Sets the method of API
+//
+// method - Nemonic for API type
+//          See HttpMethod struct
+// 
 
 func (pRA *Restapi) setMethod(method HttpMethod){
 
@@ -331,17 +561,37 @@ func (pRA *Restapi) setMethod(method HttpMethod){
   }
 }
 
+//
+// func TurnOffCertValidation()
+//
+// Added this for dealing with known self signed certs.  
+// Otherwise https call will fail
+//
+
 func TurnOffCertValidation(){
 
   http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 }
 
+//
+// func TurnOnCertValidation()
+//
+// Added this for dealing with known self signed certs.  
+// Otherwise https call will fail
+//
+
 func TurnOnCertValidation(){
 
   http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: false}
 
 }
+
+//
+// func (pRA *Restapi) Send() bool
+//
+// Sends the API request
+//
 
 func (pRA *Restapi) Send() bool {
 
