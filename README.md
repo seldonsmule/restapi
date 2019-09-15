@@ -2,10 +2,11 @@
 
 Created to do simple restapi calls in go.  There are probably better tool :)
 
-# Examples
+# Example
 
 Using Tesla APi to get a list of vechiles
 
+```go
   vehicleList := restapi.NewGet("vehicles", https://owner-api.teslamotors.com/api/1/vehicles)
 
 
@@ -30,5 +31,6 @@ Using Tesla APi to get a list of vechiles
     fmt.Printf("State[%s]\n", vehicleList.GetArrayValueString(j,"state"))
 
   }
+```
 
 
