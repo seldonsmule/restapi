@@ -14,6 +14,7 @@ package restapi
 
 import (
 	"fmt"
+	"bytes"
 	"net/http"
 	"io/ioutil"
         "encoding/json"
@@ -51,11 +52,14 @@ type Restapi struct {
 
   bRequiresAccessToken       bool
   bInnerMap                  bool
+  bHasPostJson               bool
   bInnerMapArray             bool
   sInnerMapName              string
   bDebug                     bool
   bXML                       bool
   bXMLDontParseResponse      bool
+
+  sJsonStr string
 
   nLastStatusCode int
 
@@ -172,6 +176,7 @@ func New(method HttpMethod, name string, url string) *Restapi{
   r.setMethod(method)
 
   r.bInnerMap = false
+  r.bHasPostJson = false
   r.bInnerMapArray = false
   r.DebugOff()
 
@@ -595,6 +600,8 @@ func TurnOnCertValidation(){
 
 func (pRA *Restapi) Send() bool {
 
+  var req *http.Request
+
   if(len(pRA.sUrl) == 0){
     msg := fmt.Sprintf("Send(%s): Url not set", pRA.sName)
     logmsg.Print(logmsg.Error, msg)
@@ -608,8 +615,12 @@ func (pRA *Restapi) Send() bool {
     fmt.Println("URL:",pRA.sUrl)
   }
 
-  req, _ := http.NewRequest(pRA.sMethodString, pRA.sUrl, nil)
-
+  if(!pRA.bHasPostJson){
+    req, _ = http.NewRequest(pRA.sMethodString, pRA.sUrl, nil)
+  }else{
+    req, _ = http.NewRequest(pRA.sMethodString, pRA.sUrl, 
+                              bytes.NewBufferString(pRA.sJsonStr))
+  }
 
   if(pRA.bRequiresAccessToken){
     req.Header.Add("Authorization", pRA.sAccessToken)
@@ -728,6 +739,17 @@ func (pRA *Restapi) Send() bool {
 
   return true
 
+
+}
+
+func (pRA *Restapi) SetPostJson(jsonstr string) bool {
+
+  pRA.bHasPostJson = true
+  pRA.sJsonStr = jsonstr
+
+//fmt.Println(pRA.sJsonStr)
+
+  return true
 
 }
 
