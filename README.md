@@ -33,4 +33,7 @@ Using Tesla APi to get a list of vechiles
   }
 ```
 
+# 08/22/2022 - Updated
+Will put code example in soon.  Updated to include the ability to save a json response to a go struct auto-magically for building your application
+
 
