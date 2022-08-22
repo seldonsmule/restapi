@@ -15,13 +15,17 @@ package restapi
 import (
 	"fmt"
 	"bytes"
+	"os"
 	"net/http"
 	"io/ioutil"
         "encoding/json"
         "crypto/tls"
+        "crypto/x509"
         "strings"
+        "time"
         "github.com/basgys/goxml2json"   
         "github.com/seldonsmule/logmsg"
+        "github.com/twpayne/go-jsonstruct"
 
 )
 
@@ -59,11 +63,19 @@ type Restapi struct {
   bXML                       bool
   bXMLDontParseResponse      bool
 
+  bJsonOnly                  bool // if true, we don't want the extra map help
+
+  sCertFile                  string
+  bUseCertFile               bool
+  pcaCertPool                  *x509.CertPool
+
   sJsonStr string
 
   nLastStatusCode int
 
   RawData interface{}  // used to contain the raw response msg mody
+  BodyString string
+  BodyBytes []byte
 
   mResponseMapData map[string]interface{}
   mInnerMapData map[string]interface{}
@@ -89,6 +101,67 @@ func NewPost(name string, url string) *Restapi{
 }
 
 //
+// func (pRA *Restapi) UseCert(certfile string) bool
+//
+// stores certificate from file for use
+//
+// certfil - file with certificate to be trusted
+//
+//
+
+func (pRA *Restapi) UseCert(certfile string) bool {
+
+  pRA.bUseCertFile = true
+  pRA.sCertFile = certfile
+
+/*
+  caCert, err := ioutil.ReadFile("powerwall.cer")
+
+  caCertPool := x509.NewCertPool()
+  caCertPool.AppendCertsFromPEM(caCert)
+
+  if (err != nil){
+    msg := fmt.Sprintf("Error opening certificate file [%s] %s\n", certfile, err)
+    logmsg.Print(logmsg.Error, msg)
+    return false
+  }
+*/
+
+  return true
+}
+
+//
+// FetchTLSCert queries the gateway and returns a copy of the TLS certificate
+// it is currently presenting for connections.  This is useful for saving and
+// later using with `SetTLSCert` to validate future connections.
+//
+// Credits - this code came from https://github.com/foogod/go-powerwall/blob/main/client.go
+// 
+// Might have to rethink a bunch based on his more elegant use of go
+//
+//
+
+func (pRA *Restapi) FetchTLSCert(url string) (*x509.Certificate, bool) {
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+	conn, err := tls.Dial("tcp", url+":443", tlsConfig)
+	if err != nil {
+          msg := fmt.Sprintf("Error getting certificat", err)
+          logmsg.Print(logmsg.Error, msg)
+		return nil, false
+	}
+///fmt.Println(tlsConfig)
+	defer conn.Close()
+	certs := conn.ConnectionState().PeerCertificates
+///fmt.Println(certs)
+
+	return certs[0], true
+}
+
+
+
+//
 // func NewGet(name string, url string) *Restapi
 //
 // Create a new restapi object for sending GET
@@ -97,6 +170,7 @@ func NewPost(name string, url string) *Restapi{
 // url - URL to execute against
 //
 //
+
 
 func NewGet(name string, url string) *Restapi{
   return(New(Get, name, url))
@@ -170,7 +244,11 @@ func New(method HttpMethod, name string, url string) *Restapi{
 
   r.bRequiresAccessToken = false
 
+
   r.setUrl(url)
+
+  r.bUseCertFile = false
+  r.bJsonOnly = false
 
   r.sName = name
   r.setMethod(method)
@@ -381,6 +459,12 @@ func (pRA *Restapi) Dump(){
   fmt.Println("Method:", pRA.Method)
   fmt.Println("MethodString:", pRA.sMethodString)
   fmt.Println("AccessToken:", pRA.sAccessToken)
+  fmt.Println("UseCert:", pRA.bUseCertFile)
+  fmt.Println("JsonStr:", pRA.sJsonStr)
+
+  if(pRA.bUseCertFile){
+    fmt.Println("sCertFile:",pRA.sCertFile)
+  }
   
   if(pRA.bInnerMap){
     fmt.Println("sInnerMapName:",pRA.sInnerMapName)
@@ -456,13 +540,23 @@ func (pRA *Restapi) DebugOn(){
 }
 
 //
-// func (pRA *Restapi) DebugOn()
+// func (pRA *Restapi) DebugOff()
 //
 // Turn off debugging
 //
 
 func (pRA *Restapi) DebugOff(){
   pRA.bDebug = false
+}
+
+//
+// func (pRA *Restapi) JsonOnly()
+//
+// Skips tryiing to process map data of the converted response
+//
+
+func (pRA *Restapi) JsonOnly(){
+  pRA.bJsonOnly = true
 }
 
 //
@@ -593,6 +687,93 @@ func TurnOnCertValidation(){
 }
 
 //
+// func (pRA *Restapi) GetResponseBody() string
+//
+// Returns the string version of the response
+//
+
+func (pRA *Restapi) GetResponseBody() string {
+  return pRA.BodyString
+}
+
+//
+// func (pRA *Restapi) SaveResponseBody(filename string, bstdout bool) bool
+//
+// Used to save off the data to build out json structs
+//
+
+func (pRA *Restapi) SaveResponseBody(filename string, structname string, bstdout bool) bool {
+
+  var observedValue *jsonstruct.ObservedValue
+  var decoded interface{}
+
+  json_fhd, err := os.Create(filename+".json")
+
+  if(err != nil){
+    msg := fmt.Sprintf("SaveResponseBody Create File error[%s]", err)
+    logmsg.Print(logmsg.Error, msg)
+    return false
+  }
+
+  defer json_fhd.Close()
+
+  go_fhd, gerr := os.Create(filename+".go")
+
+  if(gerr != nil){
+    msg := fmt.Sprintf("SaveResponseBody Create File error[%s]", gerr)
+    logmsg.Print(logmsg.Error, msg)
+    return false
+  }
+
+  defer go_fhd.Close()
+
+  json.Unmarshal(pRA.BodyBytes, &decoded)
+
+  observedValue = observedValue.Merge(decoded)
+
+  options := []jsonstruct.GeneratorOption{
+                jsonstruct.WithOmitEmpty(jsonstruct.OmitEmptyAuto),
+                jsonstruct.WithSkipUnparseableProperties(true),
+                jsonstruct.WithUseJSONNumber(false),
+                jsonstruct.WithGoFormat(true),
+		jsonstruct.WithTypeName(structname),
+  
+              }
+
+  goCode, jerr := jsonstruct.NewGenerator(options...).GoCode(observedValue)
+
+  if(jerr != nil) {
+    msg := fmt.Sprintf("SaveResponseBody jsonstruct.NewGenerator error[%s]", jerr)
+    logmsg.Print(logmsg.Error, msg)
+    return false
+  }
+
+  
+  if(bstdout){
+    os.Stdout.Write(goCode)
+  }
+  
+  _, err = go_fhd.Write(goCode)
+
+  if(err != nil){
+    msg := fmt.Sprintf("SaveResponseBody Write File err[%s]", err)
+    logmsg.Print(logmsg.Error, msg)
+    return false
+  }
+  
+
+  _, err2 := json_fhd.WriteString(pRA.GetResponseBody())
+
+  if(err2 != nil){
+    msg := fmt.Sprintf("SaveResponseBody Write File err2[%s]", err2)
+    logmsg.Print(logmsg.Error, msg)
+    return false
+  }
+
+  return true
+}
+
+//
 // func (pRA *Restapi) Send() bool
 //
 // Sends the API request
@@ -601,6 +782,9 @@ func TurnOnCertValidation(){
 func (pRA *Restapi) Send() bool {
 
   var req *http.Request
+  var tran *http.Transport
+
+  tran = nil
 
   if(len(pRA.sUrl) == 0){
     msg := fmt.Sprintf("Send(%s): Url not set", pRA.sName)
@@ -631,12 +815,41 @@ func (pRA *Restapi) Send() bool {
   req.Header.Add("cache-control", "no-cache")
   req.Header.Add("Content-Type", "application/json")
 
+  
+
+  if(pRA.bUseCertFile){
+    caCert, err := ioutil.ReadFile(pRA.sCertFile)
+
+    if(err != nil){
+      msg := fmt.Sprintf("Error reading cert file[%s] - %s", pRA.sCertFile, err)
+      logmsg.Print(logmsg.Error, msg)
+      return false 
+    }
+
+    pRA.pcaCertPool = x509.NewCertPool()
+    pRA.pcaCertPool.AppendCertsFromPEM(caCert)
+
+
+    tran = &http.Transport{ TLSClientConfig: &tls.Config{ RootCAs: pRA.pcaCertPool } }
+
+  } // end if use a certfile
+
 
   if(pRA.bDebug){
     fmt.Println(req)
   }
 
-  res, err := http.DefaultClient.Do(req)
+//  var netClient = &http.Client{Timeout: time.Second * 10, }
+  var netClient *http.Client
+
+  if(tran == nil){
+    netClient = &http.Client{Timeout: time.Second * 10, }
+  }else{
+    netClient = &http.Client{Transport: tran, Timeout: time.Second * 10, }
+  }
+
+  //res, err := http.DefaultClient.Do(req)
+  res, err := netClient.Do(req)
 
   if(res == nil){
     //logmsg.Print(logmsg.Error, "Error getting to server at URL:", pRA.sUrl)
@@ -668,6 +881,10 @@ func (pRA *Restapi) Send() bool {
 
   defer res.Body.Close()
   body, _ := ioutil.ReadAll(res.Body)
+
+  pRA.BodyBytes = body
+  pRA.BodyString = string(body) // save this off
+
 
   if(pRA.bDebug){
     fmt.Println(res)
@@ -716,6 +933,20 @@ func (pRA *Restapi) Send() bool {
     logmsg.Print(logmsg.Warning,"No data returned")
 
     return true
+  }
+
+  // This test is because some of the processing below still does 
+  // not always work.  Allows you to use the tool and work 
+  // work with just the json responses if desired and skip
+  // the map building.  
+  //
+  // Note the issue is the json response does not match a pattern
+  
+  if(pRA.bJsonOnly){
+
+    logmsg.Print(logmsg.Warning,"bJsonOnly set - data not fully processed")
+    return true
+
   }
 
   pRA.mResponseMapData = CastMap(pRA.RawData)
