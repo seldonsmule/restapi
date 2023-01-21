@@ -764,8 +764,20 @@ func (pRA *Restapi) SaveResponseBody(filename string, structname string, bstdout
     return false
   }
   
+  var prettyJSON bytes.Buffer
 
-  _, err2 := json_fhd.WriteString(pRA.GetResponseBody())
+  pretty_err := json.Indent(&prettyJSON, pRA.BodyBytes, "", "  ")
+
+  if(pretty_err != nil){
+
+    msg := fmt.Sprintf("SaveResponseBody json.Indent err[%s]", err)
+    logmsg.Print(logmsg.Error, msg)
+    return false
+  }
+
+  //_, err2 := json_fhd.WriteString(pRA.GetResponseBody())
+  _, err2 := json_fhd.WriteString(prettyJSON.String())
+  
 
   if(err2 != nil){
     msg := fmt.Sprintf("SaveResponseBody Write File err2[%s]", err2)
