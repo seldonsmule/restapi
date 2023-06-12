@@ -629,6 +629,14 @@ func (pRA *Restapi) setUrl(Url string){
   pRA.sUrl = Url
 }
 
+func (pRA *Restapi) GetUrl() string{
+  return(pRA.sUrl)
+}
+
+func (pRA *Restapi) GetName() string{
+  return(pRA.sName)
+}
+
 //
 //
 // Sets the method of API
