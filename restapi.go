@@ -55,6 +55,7 @@ type Restapi struct {
   sMethodString        string
 
   bRequiresAccessToken       bool
+  bRequiresApiKey            bool
   bInnerMap                  bool
   bHasPostJson               bool
   bInnerMapArray             bool
@@ -243,6 +244,7 @@ func New(method HttpMethod, name string, url string) *Restapi{
   r := new(Restapi)
 
   r.bRequiresAccessToken = false
+  r.bRequiresApiKey = false
 
 
   r.setUrl(url)
@@ -595,6 +597,18 @@ func (pRA *Restapi) HasInnerMapArray(name string, countname string){
 }
 
 //
+// func (pRA *Restapi) SetApiKey(ApiKey string)
+//
+// Sets Api Key for Authentication
+//
+
+func (pRA *Restapi) SetApiKey(ApiKey string){
+  //pRA.sAccessToken = fmt.Sprintf("X-API_KEY %s", ApiKey)
+  pRA.sAccessToken = ApiKey
+  pRA.bRequiresApiKey = true
+}
+
+//
 // func (pRA *Restapi) SetBearerAccessToken(AccessToken string)
 //
 // Sets Token for Bearer Authentication
@@ -833,10 +847,17 @@ func (pRA *Restapi) Send() bool {
     req.Header.Add("Authorization", pRA.sAccessToken)
   }
 
+  if(pRA.bRequiresApiKey){
+    req.Header.Add("x-api-key", pRA.sAccessToken)
+  }
+
 //  req.Header.Add("Accept", "*/*")
 
   req.Header.Add("cache-control", "no-cache")
   req.Header.Add("Content-Type", "application/json")
+
+
+//fmt.Println(req)
 
   
 
